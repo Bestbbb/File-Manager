@@ -1,0 +1,52 @@
+<style>
+    body {
+      font-family: system, -apple-system, '.SFNSText-Regular', 'SF UI Text', 'Lucida Grande', 'Segoe UI', Ubuntu, Cantarell, sans-serif;
+      color: #fff;
+      background-color: #8aba87;
+      text-align: center;
+      font-size: 40px;
+    }
+    
+    h2 {
+      padding: 0;
+      margin: 0;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    
+    #close {
+      color: white;
+      opacity: 0.7;
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      text-decoration: none;
+    }
+  
+</style>
+    <html>
+     <body>
+
+    <a id="close" href="javascript:window.close()">Close this Window</a>
+             <input id="select-directory" type="button" value="选择文件夹" />
+						  <input type ="button" onclick="opensth()" value="导入文件内容"/>
+						  <script>
+              require('./choose.js')
+            function opensth(){
+          var a =require('./click.js') 
+          
+          var data=a.createJSON(a.walk(document.getElementById("text").innerHTML))
+          a.insertJSON(data)  
+         const ipc=require('electron').ipcRenderer;
+          ipc.send('update')
+        }
+              </script>
+              	
+						  <label>当前路径</label>
+              <textarea id="text"></textarea>
+   </body>
+  </html>

@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>信息管理系统</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href="style/authority/basic_layout.css" rel="stylesheet" type="text/css">
+    <link href="style/authority/common_style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="./layui/css/layui.css" media="all">
+    <script src="./layui/layui.js" charset="utf-8"></script>
+    <script>
+        var oStorage = window.localStorage
+
+
+        layui.use(['table', 'layer'], function () {
+            var $ = layui.$
+            var table = layui.table,
+                layer = layui.layer
+            $(document).ready(function () {
+                readTime()
+                if (oStorage.getItem("text") == undefined) {
+                    document.getElementById("text").innerHTML = ""
+                } else {
+                    document.getElementById("text").innerHTML = oStorage.getItem("text")
+                }
+
+                setSelectOption(document.getElementById("fyHx"), oStorage.getItem("type"))
+                setSelectOption(document.getElementById("fyStatus"), oStorage.getItem("area1"))
+                setSelectOption(document.getElementById("fyStatus2"), oStorage.getItem("area2"))
+                document.getElementById("fyZldz").value = oStorage.getItem("search")
+
+
+
+                $("#import").on("click", function (event) {
+                    var content = document.getElementById("text").innerHTML
+                    oStorage.setItem("text", content)
+
+
+                    $.ajax({
+                        type: "get",
+                        url: "info.json",
+                        dataType: "json",
+
+                        success: function (e) {
+
+
+                            table.render({
+                                elem: '#demo'
+                                , cols: [[ //标题栏
+                                    { field: 'name', title: '名称', minWidth: 200, sort: true, align: 'left', style: 'cursor: pointer;', event: 'openFile' }
+                                    , { field: 'time', title: '时间', width: 80, sort: true, align: 'center' }
+                                    , { field: 'type', title: '类型', width: 120, align: 'center' }
+                                    , { field: 'area1', title: '一级行业', width: 120, align: 'left' }
+                                    , { field: 'area2', title: '二级行业', width: 120, align: 'left' }
+                                    , { field: 'keyword', title: '关键字', width: 80, align: 'center' }
+                                    , { fixed: 'right', title: '操作', toolbar: '#bardemo', width: 80, align: 'center', style: 'cursor: pointer;' }
+                                ]]
+
+                                //,skin: 'line' //表格风格
+                                , even: true,
+                                data: e
+                                , page: true //是否显示分页
+                                , limits: [500, 1000, 1500],
+                                limit: 500,
+
+                            });
+
+
+
+
+                        }
+                    })
+
+                })
+
+
+
+                $("#search").on("click", function (event) {
+                    oStorage.setItem("time", document.getElementById("fyXq").options[document.getElementById("fyXq").selectedIndex].text)
+                    oStorage.setItem("type", document.getElementById("fyHx").options[document.getElementById("fyHx").selectedIndex].text)
+                    oStorage.setItem("area1", document.getElementById("fyStatus").options[document.getElementById("fyStatus").selectedIndex].text)
+                    oStorage.setItem("area2", document.getElementById("fyStatus2").options[document.getElementById("fyStatus2").selectedIndex].text)
+                    //alert(document.getElementById("fyZldz").value)
+                    oStorage.setItem("search", document.getElementById("fyZldz").value)
+
+                    var fs = require('fs')
+                    var person = []
+                    var final = []
+                    fs.readFile("./resources/app/info.json", function (err, data) {
+                        person = JSON.parse(data.toString())
+                        var selectedAttr1 = document.getElementById("fyXq")
+                        var selectedAttr2 = document.getElementById("fyHx")
+                        var selectedAttr3 = document.getElementById("fyStatus")
+                        var selectedAttr4 = document.getElementById("fyStatus2")
+                        var time = selectedAttr1.options[selectedAttr1.selectedIndex].text
+                        var type = selectedAttr2.options[selectedAttr2.selectedIndex].text
+                        var area1 = selectedAttr3.options[selectedAttr3.selectedIndex].text
+                        var area2 = selectedAttr4.options[selectedAttr4.selectedIndex].text
+                        var key = document.getElementById("fyZldz").value;
+
+                        for (var i = 0; i < person.length; i++) {
+                            if (time == "--请选择--" && type == "--请选择--" && area1 == "--请选择--" && area2 == "--请选择--") {
+                                if (person[i].name.match(key) || person[i].keyword.match(key)) {//用match函数进行筛选，如果input的值，即变量 key的值为空，返回的是ture，
+                                    final.push(person[i])
+                                }
+                            }
+                            if (time != "--请选择--" && type == "--请选择--" && area1 == "--请选择--" && area2 == "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].time == time) {
+                                    final.push(person[i])
+                                }
+                            }
+                            if (time == "--请选择--" && type != "--请选择--" && area1 == "--请选择--" && area2 == "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].type == type) {
+                                    final.push(person[i])
+
+                                }
+                            }
+                            if (time == "--请选择--" && type == "--请选择--" && area1 != "--请选择--" && area2 == "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].area1 == area1) {
+                                    final.push(person[i])
+
+                                }
+                            }
+
+                            if (time == "--请选择--" && type == "--请选择--" && area1 == "--请选择--" && area2 != "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].area2 == area2) {
+                                    final.push(person[i])
+                                }
+                            }
+                            if (time != "--请选择--" && type != "--请选择--" && area1 == "--请选择--" && area2 == "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].time == time && person[i].type == type) {
+                                    final.push(person[i])
+
+                                }
+                            }
+                            if (time != "--请选择--" && type == "--请选择--" && area1 != "--请选择--" && area2 == "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].time == time && person[i].area1 == area1) {
+                                    final.push(person[i])
+
+                                }
+                            }
+                            if (time != "--请选择--" && type == "--请选择--" && area1 == "--请选择--" && area2 != "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].time == time && person[i].area2 == area2) {
+                                    final.push(person[i])
+
+                                }
+                            }
+                            if (time == "--请选择--" && type != "--请选择--" && area1 != "--请选择--" && area2 == "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].type == type && person[i].area1 == area1) {
+                                    final.push(person[i])
+
+                                }
+                            }
+                            if (time == "--请选择--" && type != "--请选择--" && area1 == "--请选择--" && area2 != "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].type == type && person[i].area2 == area2) {
+                                    final.push(person[i])
+
+                                }
+                            }
+                            if (time == "--请选择--" && type == "--请选择--" && area1 != "--请选择--" && area2 != "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].area1 == area1 && person[i].area2 == area2) {
+                                    final.push(person[i])
+
+                                }
+                            }
+                            if (time != "--请选择--" && type != "--请选择--" && area1 != "--请选择--" && area2 == "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].time == time && person[i].type == type && person[i].area1 == area1) {
+                                    final.push(person[i])
+
+                                }
+                            }
+                            if (time != "--请选择--" && type != "--请选择--" && area1 == "--请选择--" && area2 != "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && earchTime == time && person[i].type == type && person[i].area2 == area2) {
+                                    final.push(person[i])
+
+                                }
+                            }
+                            if (time == "--请选择--" && type != "--请选择--" && area1 != "--请选择--" && area2 != "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].type == type && person[i].area1 == area1 && person[i].area2 == area2) {
+                                    final.push(person[i])
+
+                                }
+                            }
+                            if (time != "--请选择--" && type != "--请选择--" && area1 != "--请选择--" && area2 != "--请选择--") {
+                                if ((person[i].name.match(key) || person[i].keyword.match(key)) && person[i].time == time && person[i].type == type && person[i].area1 == area1 && person[i].area2 == area2) {
+                                    final.push(person[i])
+
+                                }
+                            }
+
+
+                        }
+
+
+
+
+
+                        table.render({
+                            elem: '#demo'
+                            , cols: [[ //标题栏
+                                { field: 'name', title: '名称', minWidth: 200, sort: true, align: 'left', style: 'cursor: pointer;', event: 'openFile' }
+                                , { field: 'time', title: '时间', width: 80, sort: true, align: 'center' }
+                                , { field: 'type', title: '类型', width: 120, align: 'center' }
+                                , { field: 'area1', title: '一级行业', width: 120, align: 'left' }
+                                , { field: 'area2', title: '二级行业', width: 120, align: 'left' }
+                                , { field: 'keyword', title: '关键字', width: 80, align: 'center' }
+                                , { fixed: 'right', title: '操作', toolbar: '#bardemo', width: 80, align: 'center', style: 'cursor: pointer;' }
+                            ]]
+
+                            //,skin: 'line' //表格风格
+                            , even: true,
+                            data: final,
+                            page: true //是否显示分页
+                            , limits: [500, 1000, 1500],
+                            limit: 500,
+                            id: "demodemo"
+
+
+                        });
+
+
+                    })
+
+
+                })
+
+
+
+
+                $.ajax({
+                    type: "get",
+                    url: "info.json",
+                    dataType: "json",
+
+                    success: function (e) {
+
+
+                        var ins = table.render({
+                            elem: '#demo'
+                            , cols: [[ //标题栏
+                                { field: 'name', title: '名称', minWidth: 200, sort: true, align: 'left', style: 'cursor: pointer;', event: 'openFile' }
+                                , { field: 'time', title: '时间', width: 80, sort: true, align: 'center' }
+                                , { field: 'type', title: '类型', width: 120, align: 'center' }
+                                , { field: 'area1', title: '一级行业', width: 120, align: 'left' }
+                                , { field: 'area2', title: '二级行业', width: 120, align: 'left' }
+                                , { field: 'keyword', title: '关键字', width: 80, align: 'center' }
+                                , { fixed: 'right', title: '操作', toolbar: '#bardemo', width: 80, align: 'center', style: 'cursor: pointer;' }
+                            ]]
+
+                            //,skin: 'line' //表格风格
+                            , even: true,
+                            data: e,
+                            page: true //是否显示分页
+                            , limits: [500, 1000, 1500],
+                            limit: 500,
+                            id: "demodemo"
+
+
+                        });
+
+
+                        //这里以搜索为例
+
+
+                        $("#exportExcel").on("click", function (e) {
+                            // console.log("data-----"+JSON.stringify(table.cache.demodemo))//太猛了
+                            //将上述表格示例导出为 csv 文件
+                            // table.exportFile(ins.config.id, data); //data 为该实例中的任意数量的数据
+                            var data = JSON.parse(JSON.stringify(table.cache.demodemo))
+                            var person = []
+                            for (var i = 0; i < data.length; i++) {
+                                var single = [data[i].name, data[i].time, data[i].type, data[i].area1, data[i].area2, data[i].keyword]
+                                if (i == 0)
+                                    person.push(single.toString())
+                                else {
+                                    person.push("\n" + single.toString())
+                                }
+                            }
+
+                            console.log(person)
+                            table.exportFile(["名称", "时间", "类型", "以及行业", "二级行业", "关键字"], [person], 'csv');
+
+
+                        })
+
+                        table.on('tool(demo)', function (obj) {
+                            var tableData = obj.data
+                            if (obj.event === 'openFile') {
+                                var name = JSON.parse(JSON.stringify(tableData)).name
+                                const { shell } = require('electron');
+                                shell.openItem(name)
+
+                            }
+
+                            if (obj.event === 'edit') {
+
+
+                                layer.open({
+                                    type: 1,
+                                    offset: 'auto',
+                                    area: ['50%', '50%'],
+                                    btn: ['确定'],
+                                    yes: function (index, layero) {
+                                        //do something
+                                        var data = []
+                                        var name = document.getElementById("name").value
+                                        var time = document.getElementById("time").options[document.getElementById("time").selectedIndex].text
+                                        if (time == "--请选择--") time = ""
+                                        var type = document.getElementById("type").options[document.getElementById("type").selectedIndex].text
+                                        if (type == "--请选择--") type = ""
+
+                                        var area1 = document.getElementById("area1").options[document.getElementById("area1").selectedIndex].text
+                                        if (area1 == "--请选择--") area1 = ""
+
+                                        var area2 = document.getElementById("area2").options[document.getElementById("area2").selectedIndex].text
+                                        if (area2 == "--请选择--") area2 = ""
+                                        var keyword = document.getElementById("keyword").value
+
+                                        data = [name, time, type, area1, area2, keyword]
+
+                                        var a = require('./click.js')
+                                        a.editJSON(data)
+
+                                        alert("修改成功")
+
+
+
+                                        layer.close(index); //如果设定了yes回调，需进行手工关闭
+                                        obj.update({
+                                            name: data[0],
+                                            time: data[1],
+                                            type: data[2],
+                                            area1: data[3],
+                                            area2: data[4],
+                                            keyword: data[5]
+
+                                        })
+
+                                    },
+                                    success: function (layero, index) {
+                                        const fs = require('fs')
+                                        var person = []
+                                        fs.readFile("./resources/app/time.json", function (err, data) {
+                                            if (err) {
+                                                return console.error(err)
+                                            }
+
+                                            person = JSON.parse(data.toString())
+                                            $("#time").empty()
+                                            var option0 = document.createElement("option");
+                                            document.getElementById("time").appendChild(option0);
+                                            option0.text = "--请选择--"
+
+                                            for (var i = 0; i < person.length; i++) {
+                                                var option = document.createElement("option");
+                                                document.getElementById("time").appendChild(option);
+
+                                                option.value = i + 1; //每个option的位置
+                                                option.text = person[i].year;//每个Option的值
+
+
+                                            }
+
+                                            setSelectOption(document.getElementById("time"), tableData.time)
+
+
+
+                                        }
+                                        )
+
+
+                                        $("#name").val(tableData.name)
+
+
+                                        setSelectOption(document.getElementById("type"), tableData.type)
+                                        setSelectOption(document.getElementById("area1"), tableData.area1)
+                                        setArea('area1', 'area2')
+                                        setSelectOption(document.getElementById("area2"), tableData.area2)
+                                        $("#keyword").val(tableData.keyword)
+                                    },
+
+
+                                    content: `<label>名称</label> <input type="text" id="name" disabled="disabled" /><br>
+	<label>时间</label>
+	<select id="time">
+		<option value="">--请选择--</option>
+	</select><br>
+	<label>文件类型</label>
+	<select name="fangyuanEntity.fyHxCode" id="type" class="ui_select01">
+		<option value="">--请选择--</option>
+		<option value="76">项目建议书</option>
+		<option value="10">可行性研究报告</option>
+		<option value="14">资金申请报告</option>
+		<option value="71">项目申请报告</option>
+		<option value="76">初步设计</option>
+		<option value="10">实施方案</option>
+		<option value="14">规划</option>
+		<option value="71">节能报告</option>
+		<option value="76">课题研究</option>
+		<option value="10">中（终）期验收</option>
+		<option value="14">中（终）期评估</option>
+
+	</select><br>
+	<label>一级行业</label>
+	<select id="area1" class="ui_select01" onchange="setArea('area1','area2');">
+		<option value="">--请选择--</option>
+		<option value="1">农业、林业</option>
+		<option value="2">水利水电</option>
+		<option value="3">电力</option>
+		<option value="4">煤炭</option>
+		<option value="5">石油天然气</option>
+		<option value="6">公路</option>
+		<option value="7">铁路、城市轨道</option>
+		<option value="8">民航</option>
+		<option value="9">水运</option>
+		<option value="10">电子、信息工程</option>
+		<option value="11">冶金</option>
+		<option value="12">石化、化工、医药</option>
+		<option value="13">核工业</option>
+		<option value="14">机械</option>
+		<option value="15">轻工、纺织</option>
+		<option value="16">建材</option>
+		<option value="17">建筑</option>
+		<option value="18">市政公用工程</option>
+		<option value="19">生态建设和环境工程</option>
+		<option value="20">水文地质、工程测量、岩土工程</option>
+		<option value="21">其他</option>
+
+
+	</select><br>
+	
+	<label>二级行业</label>
+	<select id="area2" class="ui_select01">
+		<option value="">--请选择--</option>
+	</select><br>
+	<label>关键字</label> <input type="text" id="keyword" /><br>
+
+`
+
+                                })
+
+
+
+
+                            }
+                        })
+
+
+
+
+
+                    }
+                })
+
+
+
+
+
+            })
+
+        })
+
+        function setSelectOption(objSelect, targetValue) {
+            if (objSelect) {
+                var options = objSelect.options;
+                if (options) {
+                    var len = options.length;
+                    for (var i = 0; i < len; i++) {
+                        if (options[i].text == targetValue) {
+                            options[i].defaultSelected = true;
+                            options[i].selected = true;
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        var area1 = new Array()
+        area1[area1.length] = new Array("1", "农业、林业")
+        area1[area1.length] = new Array("2", "水利水电")
+        area1[area1.length] = new Array("3", "电力")
+        area1[area1.length] = new Array("4", "煤炭")
+        area1[area1.length] = new Array("5", "石油天然气")
+        area1[area1.length] = new Array("6", "公路")
+        area1[area1.length] = new Array("7", "铁路、城市轨道")
+        area1[area1.length] = new Array("8", "民航")
+        area1[area1.length] = new Array("9", "水运")
+        area1[area1.length] = new Array("10", "电子、信息工程")
+        area1[area1.length] = new Array("11", "冶金")
+        area1[area1.length] = new Array("12", "石化、化工、医药")
+        area1[area1.length] = new Array("13", "机核工业械")
+        area1[area1.length] = new Array("14", "机械")
+        area1[area1.length] = new Array("15", "轻工、纺织")
+        area1[area1.length] = new Array("16", "建材")
+        area1[area1.length] = new Array("17", "建筑")
+        area1[area1.length] = new Array("18", "市政公用工程")
+        area1[area1.length] = new Array("19", "生态建设和环境工程")
+        area1[area1.length] = new Array("20", "水文地质、工程测量、岩土工程")
+        area1[area1.length] = new Array("21", "其他")
+        var area2 = new Array()
+        area2[area2.length] = new Array("1", "1", "种植业")
+        area2[area2.length] = new Array("1", "2", "畜牧业")
+        area2[area2.length] = new Array("1", "3", "林业")
+        area2[area2.length] = new Array("1", "4", "渔业")
+        area2[area2.length] = new Array("1", "5", "副业")
+        area2[area2.length] = new Array("2", "6", "防洪工程")
+        area2[area2.length] = new Array("2", "7", "农田水利工程")
+        area2[area2.length] = new Array("2", "8", "水力发电工程")
+        area2[area2.length] = new Array("2", "9", "航道和港口工程")
+        area2[area2.length] = new Array("2", "10", "城镇供水和排水工程")
+        area2[area2.length] = new Array("2", "11", "水土保持工程和环境水利工程")
+        area2[area2.length] = new Array("2", "12", "渔业水利工程")
+        area2[area2.length] = new Array("2", "13", "海涂围垦工程")
+        area2[area2.length] = new Array("2", "14", "综合利用水利工程")
+        area2[area2.length] = new Array("3", "15", "火电")
+        area2[area2.length] = new Array("3", "16", "水电")
+        area2[area2.length] = new Array("3", "17", "核电")
+        area2[area2.length] = new Array("3", "18", "新能源")
+        area2[area2.length] = new Array("4", "19", "褐煤")
+        area2[area2.length] = new Array("4", "20", "烟煤")
+        area2[area2.length] = new Array("4", "21", "无烟煤")
+        area2[area2.length] = new Array("4", "22", "半无烟煤")
+        area2[area2.length] = new Array("5", "23", "勘探")
+        area2[area2.length] = new Array("5", "24", "开发")
+        area2[area2.length] = new Array("5", "25", "集输")
+        area2[area2.length] = new Array("5", "26", "产品")
+        area2[area2.length] = new Array("5", "27", "产品添加剂")
+        area2[area2.length] = new Array("6", "28", "高速公路")
+        area2[area2.length] = new Array("6", "29", "一级公路")
+        area2[area2.length] = new Array("6", "30", "二级公路")
+        area2[area2.length] = new Array("6", "31", "三级公路")
+        area2[area2.length] = new Array("6", "32", "四级公路")
+        area2[area2.length] = new Array("7", "33", "Ⅰ级铁路")
+        area2[area2.length] = new Array("7", "34", "Ⅱ级铁路")
+        area2[area2.length] = new Array("7", "35", "Ⅲ级铁路")
+        area2[area2.length] = new Array("7", "36", "IV级铁路")
+        area2[area2.length] = new Array("7", "37", "地铁")
+        area2[area2.length] = new Array("7", "38", "轻轨")
+        area2[area2.length] = new Array("7", "39", "有轨电车")
+        area2[area2.length] = new Array("7", "40", "市郊铁路")
+        area2[area2.length] = new Array("7", "41", "单轨交通")
+        area2[area2.length] = new Array("7", "42", "自动导轨交通")
+        area2[area2.length] = new Array("7", "43", "磁悬浮交通")
+        area2[area2.length] = new Array("7", "44", "直线电机轨道交通")
+        area2[area2.length] = new Array("8", "45", "公共航空运输")
+        area2[area2.length] = new Array("8", "46", "通用航空")
+        area2[area2.length] = new Array("9", "47", "沿海运输")
+        area2[area2.length] = new Array("9", "48", "近海运输")
+        area2[area2.length] = new Array("9", "49", "远洋运输")
+        area2[area2.length] = new Array("9", "50", "远洋运输")
+        area2[area2.length] = new Array("10", "51", "电子科学与技术")
+        area2[area2.length] = new Array("10", "52", "计算机")
+        area2[area2.length] = new Array("10", "53", "信息通讯工程")
+        area2[area2.length] = new Array("10", "54", "网络空间安全")
+        area2[area2.length] = new Array("11", "55", "黑色冶金")
+        area2[area2.length] = new Array("11", "56", "有色冶金")
+        area2[area2.length] = new Array("12", "57", "石化")
+        area2[area2.length] = new Array("12", "58", "基础化工")
+        area2[area2.length] = new Array("12", "59", "化学纤维")
+        area2[area2.length] = new Array("12", "60", "医药")
+        area2[area2.length] = new Array("13", "61", "无")
+        area2[area2.length] = new Array("14", "62", "农业机械")
+        area2[area2.length] = new Array("14", "63", "重型矿山机械")
+        area2[area2.length] = new Array("14", "64", "工程机械")
+        area2[area2.length] = new Array("14", "65", "石化通用机械")
+        area2[area2.length] = new Array("14", "66", "电工机械")
+        area2[area2.length] = new Array("14", "67", "机床")
+        area2[area2.length] = new Array("14", "68", "汽车")
+        area2[area2.length] = new Array("14", "69", "仪器仪表")
+        area2[area2.length] = new Array("14", "70", "基础机械")
+        area2[area2.length] = new Array("14", "71", "包装机械")
+        area2[area2.length] = new Array("14", "72", "环保机械")
+        area2[area2.length] = new Array("14", "73", "其他机械")
+        area2[area2.length] = new Array("15", "74", "食品")
+        area2[area2.length] = new Array("15", "75", "纺织")
+        area2[area2.length] = new Array("15", "76", "家电")
+        area2[area2.length] = new Array("15", "77", "造纸")
+        area2[area2.length] = new Array("16", "78", "结构材料")
+        area2[area2.length] = new Array("16", "79", "装饰材料")
+        area2[area2.length] = new Array("17", "80", "居住建筑")
+        area2[area2.length] = new Array("17", "81", "公共建筑")
+        area2[area2.length] = new Array("17", "82", "工业建筑")
+        area2[area2.length] = new Array("17", "83", "农业建筑")
+        area2[area2.length] = new Array("18", "84", "城市道路及其设施")
+        area2[area2.length] = new Array("18", "85", "城市桥涵及其设施")
+        area2[area2.length] = new Array("18", "86", "城市排水设施")
+        area2[area2.length] = new Array("18", "87", "城市防洪设施")
+        area2[area2.length] = new Array("18", "88", "城市道路照明设施")
+        area2[area2.length] = new Array("18", "89", "城市建设公用设施")
+        area2[area2.length] = new Array("19", "90", "生态建设")
+        area2[area2.length] = new Array("19", "91", "水污染防治")
+        area2[area2.length] = new Array("19", "92", "大气污染防治")
+        area2[area2.length] = new Array("19", "93", "固体废物处置")
+        area2[area2.length] = new Array("19", "94", "噪音防治")
+        area2[area2.length] = new Array("19", "95", "污染修复工程")
+        area2[area2.length] = new Array("20", "96", "水文地质")
+        area2[area2.length] = new Array("20", "97", "工程测量")
+        area2[area2.length] = new Array("20", "98", "岩土工程")
+        area2[area2.length] = new Array("21", "99", "无")
+
+        function setArea(ID1, ID2) {
+            var area1Obj = document.getElementById(ID1)
+            var area2Obj = document.getElementById(ID2)
+            var i;
+            var itemArray = null;
+            if (area1Obj.value.length > 0) {
+                itemArray = new Array();
+                for (i = 0; i < area2.length; i++) {
+                    if (area2[i][0] == area1Obj.value) {
+                        itemArray[itemArray.length] = new
+                            Array(area2[i][1], area2[i][2]);
+                    }
+                }
+            }
+            for (i = area2Obj.options.length; i >= 0; i--) {
+                area2Obj.options[i] = null;
+            }
+            area2Obj.options[0] = new Option("--请选择--");
+            area2Obj.options[0].value = "";
+
+            if (itemArray != null) {
+                for (i = 0; i < itemArray.length; i++) {
+                    area2Obj.options[i + 1] = new
+                        Option(itemArray[i][1]);
+                    if (itemArray[i][0] != null) {
+                        area2Obj.options[i].value = itemArray[i][0];
+                    }
+                }
+            }
+        }
+
+        function open4() {
+            var a = require('./click.js')
+            var data = a.createJSON(a.walk(document.getElementById("text").innerHTML))
+            a.insertJSON(data)
+            alert("导入后台成功！请点击下方的导入按钮进行查看！")
+        }
+        function readTime() {
+            var fs = require('fs')
+            var person = []
+            var $ = layui.$
+            fs.readFile("./resources/app/time.json", function (err, data) {
+                if (err) {
+                    return console.error(err)
+                }
+
+                person = JSON.parse(data.toString())
+                $("#fyXq").empty()
+                var option0 = document.createElement("option");
+                document.getElementById("fyXq").appendChild(option0);
+                option0.text = "--请选择--"
+
+                for (var i = 0; i < person.length; i++) {
+                    var option = document.createElement("option");
+                    document.getElementById("fyXq").appendChild(option);
+
+                    option.value = i + 1; //每个option的位置
+                    option.text = person[i].year;//每个Option的值
+
+
+                }
+                //setSelectOption(document.getElementById("fyXq"), oStorage.getItem("time"))
+
+            }
+            )
+
+
+
+
+        }
+
+
+    </script>
+
+    <!-- 注意：如果你直接复制所有代码到本地，上述css路径需要改成你本地的 -->
+</head>
+
+<body>
+    <input id="select-directory" class="layui-btn layui-btn-sm" type="button" value="选择本机文件夹" />
+    <input type="button" class="layui-btn layui-btn-sm" onclick="open4()" value="导入本机文件到后台" />
+    <script>
+        require('./choose.js')
+    </script>
+    <label>当前路径</label>
+    <textarea id="text"></textarea>
+
+    <div id="container">
+        <div class="ui_content">
+            <div class="ui_text_indent">
+                <div id="box_border">
+                    <div id="box_top">搜索</div>
+                    <div id="box_center">
+                        <input type="button" value="增加时间" onclick="addTime()" />
+                        <input type="button" value="减少时间" onclick="delTime()" />
+                        时间
+                        <select name="fangyuanEntity.fyXqCode" id="fyXq" class="ui_select01">
+                            <option value="">--请选择--</option>
+
+
+                        </select>
+                        <script>
+
+
+                            function addTime() {
+
+                                var $ = layui.$
+                                var aucNumLast = parseInt($("#fyXq option:last-child").text()) + 1;
+
+
+
+                                createTime(aucNumLast)
+                                setTimeout(function () {
+                                    readTime()
+                                }, 20)
+
+                            }
+                            function createTime(num) {
+
+                                var path_1 = require('path')
+                                var fs = require('fs')
+                                var person = []
+                                fs.readFile("./resources/app/time.json", function (err, data) {
+                                    if (err) {
+                                        return console.error(err)
+                                    }
+                                    person = JSON.parse(data.toString())
+                                    var obj = {
+                                        value: person.length + 1,
+                                        year: num
+
+                                    }
+                                    person.push(obj)
+                                    var content = JSON.stringify(person)
+                                    var file = path_1.join(__dirname, "time.json")
+                                    fs.writeFile(file, content, function (err) {
+                                        if (err) {
+                                            alert(err)
+                                        }
+
+                                    })
+
+
+                                })
+
+
+                            }
+                            function delTime() {
+                                var path_1 = require('path')
+                                var fs = require('fs')
+                                var person = []
+                                fs.readFile("./resources/app/time.json", function (err, data) {
+                                    if (err) {
+                                        return console.error(err)
+                                    }
+                                    person = JSON.parse(data.toString())
+
+
+                                    person.splice(person.length - 1, 1)
+                                    var content = JSON.stringify(person)
+                                    var file = path_1.join(__dirname, "time.json")
+                                    fs.writeFile(file, content, function (err) {
+                                        if (err) {
+                                            alert(err)
+                                        }
+
+                                    });
+                                    setTimeout(function () {
+                                        readTime()
+
+                                    }, 20)
+
+
+                                })
+
+
+                            }
+
+
+                        </script>
+
+
+
+                        文件类型
+                        <select name="fangyuanEntity.fyHxCode" id="fyHx" class="ui_select01">
+                            <option value="">--请选择--</option>
+                            <option value="76">项目建议书</option>
+                            <option value="10">可行性研究报告</option>
+                            <option value="14">资金申请报告</option>
+                            <option value="71">项目申请报告</option>
+                            <option value="76">初步设计</option>
+                            <option value="10">实施方案</option>
+                            <option value="14">规划</option>
+                            <option value="71">节能报告</option>
+                            <option value="76">课题研究</option>
+                            <option value="10">中（终）期验收</option>
+                            <option value="14">中（终）期评估</option>
+
+                        </select>
+                        一级行业
+                        <select name="fangyuanEntity.fyStatus" id="fyStatus" class="ui_select01"
+                            onchange="setArea('fyStatus','fyStatus2');">
+                            <option value="">--请选择--</option>
+                            <option value="1">农业、林业</option>
+                            <option value="2">水利水电</option>
+                            <option value="3">电力</option>
+                            <option value="4">煤炭</option>
+                            <option value="5">石油天然气</option>
+                            <option value="6">公路</option>
+                            <option value="7">铁路、城市轨道</option>
+                            <option value="8">民航</option>
+                            <option value="9">水运</option>
+                            <option value="10">电子、信息工程</option>
+                            <option value="11">冶金</option>
+                            <option value="12">石化、化工、医药</option>
+                            <option value="13">核工业</option>
+                            <option value="14">机械</option>
+                            <option value="15">轻工、纺织</option>
+                            <option value="16">建材</option>
+                            <option value="17">建筑</option>
+                            <option value="18">市政公用工程</option>
+                            <option value="19">生态建设和环境工程</option>
+                            <option value="20">水文地质、工程测量、岩土工程</option>
+                            <option value="21">其他</option>
+
+
+                        </select>
+                        二级行业
+                        <select id="fyStatus2" class="ui_select01">
+                            <option value="">--请选择--</option>
+                        </select>
+
+
+                        搜索内容&nbsp;&nbsp;<input type="text" id="fyZldz" name="fangyuanEntity.fyZldz"
+                            class="ui_input_txt02" />
+
+                    </div>
+                    <div id="box_bottom">
+                        <input type="button" value="查询" class="ui_input_btn01" data-type="reload" id="search" />
+                        <input type="button" value="导入" class="ui_input_btn01" id="import" />
+                        <input type="button" value="导出" class="ui_input_btn01" id="exportExcel" />
+                        <input type="button" value="保存" class="ui_input_btn01" onclick="save()">
+                        <input id="copy-directory" type="button" class="ui_input_btn01" value="复制" />
+                        <script>require('./copy.js')</script>
+
+                        <script>
+
+                            function save() {
+                                var a = require("./click.js")
+                                a.saveToJSON()
+                            }
+
+
+
+                        </script>
+
+                        <script>require('./addNewFile.js')
+                            require('./click.js')
+
+                        </script>
+
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <table class="layui-hide" id="demo" lay-filter="demo"></table>
+    <script type="text/html" id="bardemo">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+    
+      </script>
+
+
+
+
+</body>
+
+</html>
