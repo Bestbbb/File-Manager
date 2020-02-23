@@ -19,6 +19,7 @@ function walk(dir) {
         var path = dir + "\\" + filename
         var stat = fs.statSync(path)
         if (stat && stat.isDirectory()) {
+            
             children = children.concat(walk(path))
         }
         else {
